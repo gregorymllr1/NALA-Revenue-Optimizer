@@ -1,0 +1,384 @@
+import React, { useState, useMemo } from 'react';
+import { 
+  TrendingUp, 
+  Settings, 
+  DollarSign, 
+  AlertCircle, 
+  CheckCircle2, 
+  XCircle,
+  Factory,
+  Package,
+  Layers,
+  PieChart
+} from 'lucide-react';
+
+// --- CONSTANTS ---
+const SQM_PER_DAY_SHIFT = 10000 / 8; // 1,250 m²/day per shift
+const OPERATING_DAYS = 312;          // 6 days/week × 52 weeks
+const SQM_PER_ELEMENT = 54;          // m² of sheet consumed per element
+const COMMITTED_SHEET_M2 = 172000;   // existing customer commitment
+const ELEMENT_VALUE_MULT = 1.83;     // elements sell at 1.83× the sheet-m² rate
+const CAPACITY_ONE_SHIFT = SQM_PER_DAY_SHIFT * OPERATING_DAYS; // 390,000 m²/yr
+
+// --- CORE SOLVER ---
+const solvePlan = (target, cost, price, shifts) => {
+  const cap = CAPACITY_ONE_SHIFT * shifts;
+  const elemUnitPrice = ELEMENT_VALUE_MULT * price * SQM_PER_ELEMENT;
+
+  if (cap < COMMITTED_SHEET_M2) return null;
+
+  const availM2 = cap - COMMITTED_SHEET_M2;
+  const committedRev = COMMITTED_SHEET_M2 * price;
+  const remainingRev = target - committedRev;
+
+  let nElem = 0;
+  let extraSheet = 0;
+
+  if (remainingRev <= 0) {
+    nElem = 0;
+    extraSheet = 0;
+  } else {
+    const maxElem = Math.floor(availM2 / SQM_PER_ELEMENT);
+    const elemNeeded = Math.ceil(remainingRev / elemUnitPrice);
+    nElem = Math.min(elemNeeded, maxElem);
+
+    const elemRevSoFar = nElem * elemUnitPrice;
+    const gap = remainingRev - elemRevSoFar;
+
+    if (gap > 0 && price > 0) {
+      const sheetM2Needed = Math.ceil(gap / price);
+      const availAfterElem = availM2 - nElem * SQM_PER_ELEMENT;
+      extraSheet = Math.min(sheetM2Needed, Math.floor(availAfterElem));
+    } else {
+      extraSheet = 0;
+    }
+  }
+
+  const totalSheet = COMMITTED_SHEET_M2 + extraSheet;
+  const totalM2 = totalSheet + nElem * SQM_PER_ELEMENT;
+  const sheetRev = totalSheet * price;
+  const elemRev = nElem * elemUnitPrice;
+  const revenue = sheetRev + elemRev;
+  const prodCost = totalM2 * cost;
+  const margin = revenue - prodCost;
+
+  const s1Used = Math.min(totalM2, CAPACITY_ONE_SHIFT);
+  const s1Pct = (s1Used / CAPACITY_ONE_SHIFT) * 100;
+  const s2Used = shifts === 2 ? Math.max(0, totalM2 - CAPACITY_ONE_SHIFT) : 0;
+  const s2Pct = shifts === 2 ? (s2Used / CAPACITY_ONE_SHIFT) * 100 : 0;
+
+  return {
+    shifts,
+    capacity: cap,
+    elements: nElem,
+    elemPrice: elemUnitPrice,
+    extraSheet,
+    totalSheet,
+    totalM2,
+    utilization: (totalM2 / cap) * 100,
+    revenue,
+    cost: prodCost,
+    margin,
+    marginPct: revenue ? (margin / revenue) * 100 : 0,
+    sheetRev,
+    elemRev,
+    s1Used,
+    s1Pct,
+    s2Used,
+    s2Pct,
+  };
+};
+
+// --- HELPER COMPONENTS ---
+const formatCurrency = (val) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(val);
+const formatNumber = (val) => new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(val);
+const formatDecimals = (val) => new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(val);
+
+const DataRow = ({ label, value, subtext, highlight = false, alert = false }) => (
+  <div className={`flex justify-between items-center py-2 border-b border-slate-100 last:border-0 ${highlight ? 'font-semibold text-slate-900' : 'text-slate-600'} ${alert ? 'text-rose-600 bg-rose-50 -mx-4 px-4 rounded' : ''}`}>
+    <div>
+      <span className="block">{label}</span>
+      {subtext && <span className="block text-xs text-slate-400 font-normal mt-0.5">{subtext}</span>}
+    </div>
+    <span className="text-right">{value}</span>
+  </div>
+);
+
+export default function App() {
+  const [target, setTarget] = useState(5000000);
+  const [cost, setCost] = useState(9.50);
+  const [price, setPrice] = useState(25.00);
+
+  // Analyze plan automatically when inputs change
+  const result = useMemo(() => {
+    if (price <= 0 || cost <= 0 || target <= 0) {
+      return { error: 'All inputs must be strictly positive values.' };
+    }
+
+    const p1 = solvePlan(target, cost, price, 1);
+    const p2 = solvePlan(target, cost, price, 2);
+
+    let rec = null;
+    let label = '';
+    let feasible = false;
+
+    if (p1 && p1.revenue >= target) {
+      rec = p1;
+      label = 'Feasible with 1 Shift';
+      feasible = true;
+    } else if (p2 && p2.revenue >= target) {
+      rec = p2;
+      label = 'Feasible — 2 Shifts Required';
+      feasible = true;
+    } else {
+      const maxRev = p2 ? p2.revenue : (p1 ? p1.revenue : 0);
+      rec = p2 || p1;
+      label = `NOT Feasible ($${formatNumber(target - maxRev)} short of target)`;
+      feasible = false;
+    }
+
+    return { rec, label, feasible, error: null };
+  }, [target, cost, price]);
+
+  const handleFocus = (event) => event.target.select();
+
+  return (
+    <div className="min-h-screen bg-slate-50 text-slate-800 p-4 md:p-8 font-sans">
+      <div className="max-w-6xl mx-auto space-y-6">
+        
+        {/* Header */}
+        <header className="flex flex-col md:flex-row justify-between items-start md:items-center bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+          <div>
+            <h1 className="text-2xl font-bold flex items-center text-slate-900">
+              <TrendingUp className="mr-3 text-indigo-600" />
+              Gross Revenue Optimizer
+            </h1>
+            <p className="text-slate-500 mt-1 text-sm">Dynamically balance elements and sheets to meet your revenue targets.</p>
+          </div>
+          <div className="mt-4 md:mt-0 flex gap-4 text-xs text-slate-500 bg-slate-50 p-3 rounded-lg border border-slate-100">
+            <div>
+              <span className="block font-semibold text-slate-700">Constants</span>
+              <ul className="mt-1 space-y-0.5">
+                <li>• 312 operating days/yr</li>
+                <li>• 1,250 m²/day/shift</li>
+              </ul>
+            </div>
+            <div>
+              <span className="block font-semibold text-slate-700">&nbsp;</span>
+              <ul className="mt-1 space-y-0.5">
+                <li>• 54 m²/element</li>
+                <li>• 172,000 m² committed</li>
+              </ul>
+            </div>
+          </div>
+        </header>
+
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          
+          {/* Left Column: Inputs */}
+          <div className="lg:col-span-4 space-y-6">
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+              <h2 className="text-lg font-bold mb-4 flex items-center text-slate-800">
+                <Settings className="w-5 h-5 mr-2 text-slate-400" />
+                Parameters
+              </h2>
+              
+              <div className="space-y-5">
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-1">Target Revenue ($)</label>
+                  <div className="relative">
+                    <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
+                    <input 
+                      type="number" 
+                      value={target} 
+                      onChange={(e) => setTarget(Number(e.target.value))}
+                      onFocus={handleFocus}
+                      className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all font-medium text-slate-900"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-1">Production Cost ($/m²)</label>
+                  <div className="relative">
+                    <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
+                    <input 
+                      type="number" 
+                      step="0.1"
+                      value={cost} 
+                      onChange={(e) => setCost(Number(e.target.value))}
+                      onFocus={handleFocus}
+                      className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all font-medium text-slate-900"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-1">Sheet Market Price ($/m²)</label>
+                  <div className="relative">
+                    <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
+                    <input 
+                      type="number" 
+                      step="0.5"
+                      value={price} 
+                      onChange={(e) => setPrice(Number(e.target.value))}
+                      onFocus={handleFocus}
+                      className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all font-medium text-slate-900"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Live Pricing Callout */}
+            {!result.error && result.rec && (
+              <div className="bg-indigo-50 rounded-2xl border border-indigo-100 p-5">
+                <h3 className="text-indigo-900 font-semibold mb-3 flex items-center">
+                  <DollarSign className="w-4 h-4 mr-1" /> Pricing Metrics
+                </h3>
+                <DataRow label="Sheet Price" value={`$${formatDecimals(price)} /m²`} />
+                <DataRow 
+                  label="Element Price" 
+                  value={`$${formatDecimals(result.rec.elemPrice)} /unit`} 
+                  subtext="1.83 × Sheet Price × 54 m²" 
+                  highlight
+                />
+              </div>
+            )}
+          </div>
+
+          {/* Right Column: Results */}
+          <div className="lg:col-span-8">
+            {result.error ? (
+              <div className="bg-rose-50 border border-rose-200 text-rose-700 p-6 rounded-2xl flex items-center">
+                <AlertCircle className="w-6 h-6 mr-3 flex-shrink-0" />
+                <span className="font-medium">{result.error}</span>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                
+                {/* Status Banner */}
+                <div className={`p-4 rounded-2xl border flex items-center justify-between ${result.feasible ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-rose-50 border-rose-200 text-rose-800'}`}>
+                  <div className="flex items-center">
+                    {result.feasible ? <CheckCircle2 className="w-6 h-6 mr-3 text-emerald-600" /> : <XCircle className="w-6 h-6 mr-3 text-rose-600" />}
+                    <div>
+                      <h2 className="font-bold text-lg">{result.label}</h2>
+                      {!result.feasible && <p className="text-sm opacity-90 mt-0.5">Increase market price or lower target to achieve feasibility.</p>}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Top Metrics Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+                    <div className="text-sm text-slate-500 font-medium mb-1">Achieved Revenue</div>
+                    <div className={`text-2xl font-bold ${result.feasible ? 'text-emerald-600' : 'text-slate-900'}`}>
+                      {formatCurrency(result.rec.revenue)}
+                    </div>
+                    <div className="mt-3 w-full bg-slate-100 rounded-full h-1.5 overflow-hidden flex">
+                      <div 
+                        className={`h-full ${result.feasible ? 'bg-emerald-500' : 'bg-rose-500'}`} 
+                        style={{ width: `${Math.min((result.rec.revenue / target) * 100, 100)}%` }}
+                      ></div>
+                    </div>
+                    <div className="text-xs text-slate-400 mt-1.5 flex justify-between">
+                      <span>0</span>
+                      <span>Target: {formatCurrency(target)}</span>
+                    </div>
+                  </div>
+
+                  <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+                    <div className="text-sm text-slate-500 font-medium mb-1">Gross Margin</div>
+                    <div className="text-2xl font-bold text-slate-900">
+                      {formatCurrency(result.rec.margin)}
+                    </div>
+                    <div className="mt-2 text-sm font-medium text-slate-600 bg-slate-100 inline-block px-2 py-1 rounded">
+                      {result.rec.marginPct.toFixed(1)}% Margin
+                    </div>
+                  </div>
+
+                  <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+                    <div className="text-sm text-slate-500 font-medium mb-1">Total Production</div>
+                    <div className="text-2xl font-bold text-slate-900">
+                      {formatNumber(result.rec.totalM2)} <span className="text-base font-normal text-slate-500">m²</span>
+                    </div>
+                    <div className="mt-2 text-sm text-slate-500 flex items-center">
+                      <Layers className="w-4 h-4 mr-1.5" />
+                      {result.rec.shifts} Shift{result.rec.shifts > 1 ? 's' : ''} ({result.rec.utilization.toFixed(1)}% Utilized)
+                    </div>
+                  </div>
+                </div>
+
+                {/* Detail Tables */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  
+                  {/* Production Plan */}
+                  <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                    <div className="bg-slate-50 border-b border-slate-200 px-5 py-3 flex items-center text-slate-800 font-semibold">
+                      <Package className="w-4 h-4 mr-2 text-slate-400" />
+                      Production Plan
+                    </div>
+                    <div className="p-5">
+                      <DataRow label="Committed Sheet" value={`${formatNumber(COMMITTED_SHEET_M2)} m²`} />
+                      <DataRow label="Additional Sheet Sold" value={`${formatNumber(result.rec.extraSheet)} m²`} />
+                      <DataRow label="Total Sheet Sold" value={`${formatNumber(result.rec.totalSheet)} m²`} highlight />
+                      <div className="my-3 border-t border-slate-100"></div>
+                      <DataRow label="Elements Produced" value={`${formatNumber(result.rec.elements)} units`} />
+                      <DataRow label="Sheet Consumed for Elements" value={`${formatNumber(result.rec.elements * SQM_PER_ELEMENT)} m²`} />
+                      <div className="my-3 border-t border-slate-100"></div>
+                      <DataRow label="Total m² Produced" value={`${formatNumber(result.rec.totalM2)} m²`} highlight />
+                    </div>
+                  </div>
+
+                  {/* Financials Breakdown */}
+                  <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                    <div className="bg-slate-50 border-b border-slate-200 px-5 py-3 flex items-center text-slate-800 font-semibold">
+                      <PieChart className="w-4 h-4 mr-2 text-slate-400" />
+                      Financial Breakdown
+                    </div>
+                    <div className="p-5">
+                      <DataRow label="Sheet Revenue" value={formatCurrency(result.rec.sheetRev)} />
+                      <DataRow label="Element Revenue" value={formatCurrency(result.rec.elemRev)} />
+                      <DataRow label="Total Revenue" value={formatCurrency(result.rec.revenue)} highlight />
+                      <div className="my-3 border-t border-slate-100"></div>
+                      <DataRow label="Production Cost" value={`-${formatCurrency(result.rec.cost)}`} alert />
+                      <div className="my-3 border-t border-slate-100"></div>
+                      <DataRow label="Gross Margin" value={formatCurrency(result.rec.margin)} highlight />
+                    </div>
+                  </div>
+
+                  {/* Capacity & Shifts */}
+                  <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden md:col-span-2">
+                    <div className="bg-slate-50 border-b border-slate-200 px-5 py-3 flex items-center text-slate-800 font-semibold">
+                      <Factory className="w-4 h-4 mr-2 text-slate-400" />
+                      Capacity & Utilization
+                    </div>
+                    <div className="p-5 grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-2">
+                      <div className="space-y-2">
+                        <DataRow label="Total Annual Capacity" value={`${formatNumber(result.rec.capacity)} m²`} />
+                        <DataRow label="Overall Utilization" value={`${result.rec.utilization.toFixed(1)}%`} highlight />
+                      </div>
+                      <div className="space-y-2">
+                        <DataRow label="Shift 1 Used" value={`${formatNumber(result.rec.s1Used)} m² (${result.rec.s1Pct.toFixed(1)}%)`} highlight={result.rec.s1Pct > 0} />
+                        {result.rec.shifts === 2 && (
+                          <DataRow 
+                            label="Shift 2 Used" 
+                            value={`${formatNumber(result.rec.s2Used)} m² (${result.rec.s2Pct.toFixed(1)}%)`} 
+                            highlight={result.rec.s2Pct > 0} 
+                            alert={result.rec.s2Pct > 100}
+                          />
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+            )}
+          </div>
+
+        </div>
+      </div>
+    </div>
+  );
+}
