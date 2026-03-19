@@ -17,188 +17,62 @@
       --bad-fg: #991b1b;
       --accent: #1d4ed8;
     }
-
     * { box-sizing: border-box; }
-
     body {
-      margin: 0;
-      padding: 24px;
+      margin: 0; padding: 24px;
       font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
       color: var(--text);
       background: radial-gradient(1200px 600px at 20% -10%, #dbeafe 0%, transparent 55%), var(--bg);
     }
-
-    .wrap {
-      max-width: 1100px;
-      margin: 0 auto;
-      display: grid;
-      gap: 16px;
-    }
-
+    .wrap { max-width: 1100px; margin: 0 auto; display: grid; gap: 16px; }
     .card {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
-      padding: 16px;
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 14px; box-shadow: 0 1px 2px rgba(15,23,42,0.05); padding: 16px;
     }
-
-    .header {
-      display: flex;
-      justify-content: space-between;
-      gap: 16px;
-      flex-wrap: wrap;
-    }
-
-    .header h1 {
-      margin: 0;
-      font-size: 1.5rem;
-    }
-
-    .muted {
-      color: var(--muted);
-      margin: 6px 0 0;
-      font-size: 0.95rem;
-    }
-
+    .header { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+    .header h1 { margin: 0; font-size: 1.5rem; }
+    .muted { color: var(--muted); margin: 6px 0 0; font-size: 0.95rem; }
     .constants {
-      font-size: 0.85rem;
-      color: var(--muted);
-      background: #f8fafc;
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 8px 12px;
-      line-height: 1.45;
+      font-size: 0.85rem; color: var(--muted); background: #f8fafc;
+      border: 1px solid var(--border); border-radius: 10px; padding: 8px 12px; line-height: 1.45;
     }
-
-    .layout {
-      display: grid;
-      grid-template-columns: 340px 1fr;
-      gap: 16px;
-    }
-
-    .field {
-      display: grid;
-      gap: 6px;
-      margin-bottom: 12px;
-    }
-
-    .field label {
-      font-size: 0.9rem;
-      color: #334155;
-      font-weight: 600;
-    }
-
+    .layout { display: grid; grid-template-columns: 370px 1fr; gap: 16px; }
+    .field { display: grid; gap: 6px; margin-bottom: 12px; }
+    .field label { font-size: 0.9rem; color: #334155; font-weight: 600; }
     .field input {
-      width: 100%;
-      padding: 10px 12px;
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      font-size: 0.95rem;
-      color: var(--text);
-      background: #fff;
+      width: 100%; padding: 10px 12px; border: 1px solid var(--border);
+      border-radius: 10px; font-size: 0.95rem; color: var(--text); background: #fff;
     }
-
-    .field input:focus {
-      outline: none;
-      border-color: #93c5fd;
-      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+    .field input:focus { outline: none; border-color: #93c5fd; box-shadow: 0 0 0 3px rgba(59,130,246,0.15); }
+    .note { margin-top: 8px; font-size: 0.85rem; color: var(--muted); border-top: 1px dashed var(--border); padding-top: 10px; }
+    .toggle-group { display: flex; border-radius: 10px; overflow: hidden; border: 1px solid var(--border); margin-bottom: 6px; }
+    .toggle-group button {
+      flex: 1; padding: 8px 4px; border: none; background: #f8fafc;
+      color: var(--muted); font-size: 0.85rem; font-weight: 600; cursor: pointer;
+      transition: background 0.15s, color 0.15s;
     }
-
-    .note {
-      margin-top: 8px;
-      font-size: 0.85rem;
-      color: var(--muted);
-      border-top: 1px dashed var(--border);
-      padding-top: 10px;
+    .toggle-group button.active { background: var(--accent); color: #fff; }
+    .derived {
+      margin: 6px 0 0; padding: 8px 12px; background: #f1f5f9;
+      border: 1px dashed var(--border); border-radius: 10px; font-size: 0.88rem; color: var(--muted);
     }
-
-    .status {
-      border-radius: 12px;
-      padding: 12px;
-      font-weight: 700;
-      margin-bottom: 12px;
-      border: 1px solid transparent;
-    }
-
-    .status.ok {
-      background: var(--ok-bg);
-      color: var(--ok-fg);
-      border-color: #bbf7d0;
-    }
-
-    .status.bad {
-      background: var(--bad-bg);
-      color: var(--bad-fg);
-      border-color: #fecaca;
-    }
-
-    .grid3 {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 10px;
-      margin-bottom: 12px;
-    }
-
-    .metric {
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 10px;
-      background: #fff;
-    }
-
-    .metric .label {
-      font-size: 0.8rem;
-      color: var(--muted);
-    }
-
-    .metric .value {
-      margin-top: 3px;
-      font-size: 1.15rem;
-      font-weight: 700;
-    }
-
-    .section {
-      margin-top: 12px;
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      overflow: hidden;
-    }
-
-    .section h3 {
-      margin: 0;
-      padding: 10px 12px;
-      font-size: 0.95rem;
-      border-bottom: 1px solid var(--border);
-      background: #f8fafc;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 0.9rem;
-    }
-
-    td {
-      border-bottom: 1px solid #f1f5f9;
-      padding: 8px 12px;
-      vertical-align: top;
-    }
-
+    .derived strong { color: var(--text); }
+    .status { border-radius: 12px; padding: 12px; font-weight: 700; margin-bottom: 12px; border: 1px solid transparent; }
+    .status.ok { background: var(--ok-bg); color: var(--ok-fg); border-color: #bbf7d0; }
+    .status.bad { background: var(--bad-bg); color: var(--bad-fg); border-color: #fecaca; }
+    .grid3 { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 10px; margin-bottom: 12px; }
+    .metric { border: 1px solid var(--border); border-radius: 10px; padding: 10px; background: #fff; }
+    .metric .label { font-size: 0.8rem; color: var(--muted); }
+    .metric .value { margin-top: 3px; font-size: 1.15rem; font-weight: 700; }
+    .section { margin-top: 12px; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+    .section h3 { margin: 0; padding: 10px 12px; font-size: 0.95rem; border-bottom: 1px solid var(--border); background: #f8fafc; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+    td { border-bottom: 1px solid #f1f5f9; padding: 8px 12px; vertical-align: top; }
     tr:last-child td { border-bottom: none; }
     td:last-child { text-align: right; font-variant-numeric: tabular-nums; }
     .strong td { font-weight: 700; }
-
-    .small {
-      color: var(--muted);
-      font-size: 0.8rem;
-      margin-top: 8px;
-    }
-
-    @media (max-width: 920px) {
-      .layout { grid-template-columns: 1fr; }
-      .grid3 { grid-template-columns: 1fr; }
-    }
+    .small { color: var(--muted); font-size: 0.8rem; margin-top: 8px; }
+    @media (max-width: 920px) { .layout { grid-template-columns: 1fr; } .grid3 { grid-template-columns: 1fr; } }
   </style>
 </head>
 <body>
@@ -209,11 +83,9 @@
         <p class="muted">Feasibility and margin optimizer for sheet and element production.</p>
       </div>
       <div class="constants">
-        312 operating days/yr<br>
-        1,250 m^2/day/shift<br>
-        54 m^2 per element<br>
-        172,000 m^2 committed sheet<br>
-        Element price = 1.83 x sheet price x 54
+        312 operating days/yr &middot; 1,250 m&sup2;/day/shift<br>
+        54 m&sup2; per element &middot; 172,000 m&sup2; committed sheet<br>
+        Element price = 1.83 &times; sheet price &times; 54
       </div>
     </section>
 
@@ -224,53 +96,41 @@
           <input id="target" type="number" step="100000" value="10000000" />
         </div>
         <div class="field">
-          <label for="cost">Production Cost ($/m^2)</label>
+          <label for="cost">Production Cost ($/m&sup2;)</label>
           <input id="cost" type="number" step="0.1" value="9.5" />
         </div>
-        <div class="field">
-          <label for="price">Sheet Market Price ($/m^2)</label>
+
+        <div style="margin-bottom:12px">
+          <label style="font-size:0.9rem;color:#334155;font-weight:600;display:block;margin-bottom:6px;">I know the price of:</label>
+          <div class="toggle-group">
+            <button id="modeSheet" class="active" type="button">Sheet ($/m&sup2;)</button>
+            <button id="modeElem" type="button">Element ($/unit)</button>
+          </div>
+          <p style="margin:0 0 8px;font-size:0.8rem;color:var(--muted);">Enter one &mdash; the other is calculated automatically.</p>
+        </div>
+        <div class="field" id="fieldSheet">
+          <label for="price">Sheet Market Price ($/m&sup2;)</label>
           <input id="price" type="number" step="0.5" value="25" />
         </div>
+        <div class="field" id="fieldElem" style="display:none">
+          <label for="elemPriceInput">Element Market Price ($/unit)</label>
+          <input id="elemPriceInput" type="number" step="10" value="2470.50" />
+        </div>
+        <div id="derivedPrice" class="derived"></div>
         <div class="note">Results update automatically as values change.</div>
       </article>
 
       <article class="card">
         <div id="status" class="status"></div>
         <div class="grid3">
-          <div class="metric">
-            <div class="label">Achieved Revenue</div>
-            <div id="mRevenue" class="value"></div>
-          </div>
-          <div class="metric">
-            <div class="label">Gross Margin</div>
-            <div id="mMargin" class="value"></div>
-          </div>
-          <div class="metric">
-            <div class="label">Shifts Required</div>
-            <div id="mShifts" class="value"></div>
-          </div>
+          <div class="metric"><div class="label">Achieved Revenue</div><div id="mRevenue" class="value"></div></div>
+          <div class="metric"><div class="label">Gross Margin</div><div id="mMargin" class="value"></div></div>
+          <div class="metric"><div class="label">Shifts Required</div><div id="mShifts" class="value"></div></div>
         </div>
-
-        <section class="section">
-          <h3>Production Plan</h3>
-          <table><tbody id="tProduction"></tbody></table>
-        </section>
-
-        <section class="section">
-          <h3>Pricing</h3>
-          <table><tbody id="tPricing"></tbody></table>
-        </section>
-
-        <section class="section">
-          <h3>Financials</h3>
-          <table><tbody id="tFinancials"></tbody></table>
-        </section>
-
-        <section class="section">
-          <h3>Capacity and Shift Utilization</h3>
-          <table><tbody id="tCapacity"></tbody></table>
-        </section>
-
+        <section class="section"><h3>Production Plan</h3><table><tbody id="tProduction"></tbody></table></section>
+        <section class="section"><h3>Pricing</h3><table><tbody id="tPricing"></tbody></table></section>
+        <section class="section"><h3>Financials</h3><table><tbody id="tFinancials"></tbody></table></section>
+        <section class="section"><h3>Capacity and Shift Utilization</h3><table><tbody id="tCapacity"></tbody></table></section>
         <p id="footnote" class="small"></p>
       </article>
     </section>
@@ -284,10 +144,18 @@
     const ELEMENT_VALUE_MULT = 1.83;
     const CAPACITY_ONE_SHIFT = SQM_PER_DAY_SHIFT * OPERATING_DAYS;
 
+    let priceMode = 'sheet';
+
     const el = {
       target: document.getElementById('target'),
       cost: document.getElementById('cost'),
       price: document.getElementById('price'),
+      elemPriceInput: document.getElementById('elemPriceInput'),
+      modeSheet: document.getElementById('modeSheet'),
+      modeElem: document.getElementById('modeElem'),
+      fieldSheet: document.getElementById('fieldSheet'),
+      fieldElem: document.getElementById('fieldElem'),
+      derivedPrice: document.getElementById('derivedPrice'),
       status: document.getElementById('status'),
       mRevenue: document.getElementById('mRevenue'),
       mMargin: document.getElementById('mMargin'),
@@ -302,130 +170,141 @@
     const fmtCurrency = (v, d = 0) => new Intl.NumberFormat('en-US', {
       style: 'currency', currency: 'USD', minimumFractionDigits: d, maximumFractionDigits: d
     }).format(v);
-
     const fmtNum = (v, d = 0) => new Intl.NumberFormat('en-US', {
       minimumFractionDigits: d, maximumFractionDigits: d
     }).format(v);
 
+    function getSheetPrice() {
+      if (priceMode === 'sheet') return Number(el.price.value);
+      return Number(el.elemPriceInput.value) / (ELEMENT_VALUE_MULT * SQM_PER_ELEMENT);
+    }
+
+    function updateDerived() {
+      if (priceMode === 'sheet') {
+        const sp = Number(el.price.value);
+        const ep = ELEMENT_VALUE_MULT * sp * SQM_PER_ELEMENT;
+        el.derivedPrice.innerHTML = 'Derived element price: <strong>' + fmtCurrency(ep, 2) + '/unit</strong> (1.83 &times; $' + fmtNum(sp, 2) + ' &times; 54)';
+      } else {
+        const ep = Number(el.elemPriceInput.value);
+        const sp = ep / (ELEMENT_VALUE_MULT * SQM_PER_ELEMENT);
+        el.derivedPrice.innerHTML = 'Derived sheet price: <strong>' + fmtCurrency(sp, 2) + '/m&sup2;</strong> (' + fmtCurrency(ep, 2) + ' &divide; 1.83 &divide; 54)';
+      }
+    }
+
+    function setMode(mode) {
+      priceMode = mode;
+      el.modeSheet.classList.toggle('active', mode === 'sheet');
+      el.modeElem.classList.toggle('active', mode === 'element');
+      el.fieldSheet.style.display = mode === 'sheet' ? '' : 'none';
+      el.fieldElem.style.display = mode === 'element' ? '' : 'none';
+      if (mode === 'element') {
+        el.elemPriceInput.value = (ELEMENT_VALUE_MULT * Number(el.price.value) * SQM_PER_ELEMENT).toFixed(2);
+      } else {
+        el.price.value = (Number(el.elemPriceInput.value) / (ELEMENT_VALUE_MULT * SQM_PER_ELEMENT)).toFixed(2);
+      }
+      updateDerived();
+      analyze();
+    }
+
+    el.modeSheet.addEventListener('click', function() { setMode('sheet'); });
+    el.modeElem.addEventListener('click', function() { setMode('element'); });
+
     function solvePlan(target, cost, price, shifts) {
-      const cap = CAPACITY_ONE_SHIFT * shifts;
-      const elemUnitPrice = ELEMENT_VALUE_MULT * price * SQM_PER_ELEMENT;
-
+      var cap = CAPACITY_ONE_SHIFT * shifts;
+      var elemUnitPrice = ELEMENT_VALUE_MULT * price * SQM_PER_ELEMENT;
       if (cap < COMMITTED_SHEET_M2) return null;
-
-      const availM2 = cap - COMMITTED_SHEET_M2;
-      const committedRev = COMMITTED_SHEET_M2 * price;
-      const remainingRev = target - committedRev;
-
-      let nElem = 0;
-      let extraSheet = 0;
-
+      var availM2 = cap - COMMITTED_SHEET_M2;
+      var committedRev = COMMITTED_SHEET_M2 * price;
+      var remainingRev = target - committedRev;
+      var nElem = 0, extraSheet = 0;
       if (remainingRev > 0) {
-        const maxElem = Math.floor(availM2 / SQM_PER_ELEMENT);
-        const elemNeeded = Math.ceil(remainingRev / elemUnitPrice);
+        var maxElem = Math.floor(availM2 / SQM_PER_ELEMENT);
+        var elemNeeded = Math.ceil(remainingRev / elemUnitPrice);
         nElem = Math.min(elemNeeded, maxElem);
-
-        const elemRevSoFar = nElem * elemUnitPrice;
-        const gap = remainingRev - elemRevSoFar;
-
+        var elemRevSoFar = nElem * elemUnitPrice;
+        var gap = remainingRev - elemRevSoFar;
         if (gap > 0 && price > 0) {
-          const sheetM2Needed = Math.ceil(gap / price);
-          const availAfterElem = availM2 - nElem * SQM_PER_ELEMENT;
+          var sheetM2Needed = Math.ceil(gap / price);
+          var availAfterElem = availM2 - nElem * SQM_PER_ELEMENT;
           extraSheet = Math.min(sheetM2Needed, Math.floor(availAfterElem));
         }
       }
-
-      const totalSheet = COMMITTED_SHEET_M2 + extraSheet;
-      const totalM2 = totalSheet + nElem * SQM_PER_ELEMENT;
-      const sheetRev = totalSheet * price;
-      const elemRev = nElem * elemUnitPrice;
-      const revenue = sheetRev + elemRev;
-      const prodCost = totalM2 * cost;
-      const margin = revenue - prodCost;
-
-      const s1Used = Math.min(totalM2, CAPACITY_ONE_SHIFT);
-      const s1Pct = (s1Used / CAPACITY_ONE_SHIFT) * 100;
-      const s2Used = shifts === 2 ? Math.max(0, totalM2 - CAPACITY_ONE_SHIFT) : 0;
-      const s2Pct = shifts === 2 ? (s2Used / CAPACITY_ONE_SHIFT) * 100 : 0;
-
+      var totalSheet = COMMITTED_SHEET_M2 + extraSheet;
+      var totalM2 = totalSheet + nElem * SQM_PER_ELEMENT;
+      var sheetRev = totalSheet * price;
+      var elemRev = nElem * elemUnitPrice;
+      var revenue = sheetRev + elemRev;
+      var prodCost = totalM2 * cost;
+      var margin = revenue - prodCost;
+      var s1Used = Math.min(totalM2, CAPACITY_ONE_SHIFT);
+      var s1Pct = (s1Used / CAPACITY_ONE_SHIFT) * 100;
+      var s2Used = shifts === 2 ? Math.max(0, totalM2 - CAPACITY_ONE_SHIFT) : 0;
+      var s2Pct = shifts === 2 ? (s2Used / CAPACITY_ONE_SHIFT) * 100 : 0;
       return {
-        shifts, capacity: cap,
-        elements: nElem, elemPrice: elemUnitPrice,
-        extraSheet, totalSheet,
-        totalM2, utilization: (totalM2 / cap) * 100,
-        revenue, cost: prodCost, margin,
+        shifts: shifts, capacity: cap, elements: nElem, elemPrice: elemUnitPrice,
+        extraSheet: extraSheet, totalSheet: totalSheet,
+        totalM2: totalM2, utilization: (totalM2 / cap) * 100,
+        revenue: revenue, cost: prodCost, margin: margin,
         marginPct: revenue ? (margin / revenue) * 100 : 0,
-        sheetRev, elemRev,
-        s1Used, s1Pct, s2Used, s2Pct
+        sheetRev: sheetRev, elemRev: elemRev,
+        s1Used: s1Used, s1Pct: s1Pct, s2Used: s2Used, s2Pct: s2Pct
       };
     }
 
-    function row(label, value, strong = false) {
-      return `<tr class="${strong ? 'strong' : ''}"><td>${label}</td><td>${value}</td></tr>`;
+    function row(label, value, strong) {
+      return '<tr class="' + (strong ? 'strong' : '') + '"><td>' + label + '</td><td>' + value + '</td></tr>';
     }
 
     function analyze() {
-      const target = Number(el.target.value);
-      const cost = Number(el.cost.value);
-      const price = Number(el.price.value);
+      var target = Number(el.target.value);
+      var cost = Number(el.cost.value);
+      var price = getSheetPrice();
+      updateDerived();
 
       if (!(target > 0 && cost > 0 && price > 0)) {
         el.status.className = 'status bad';
         el.status.textContent = 'All inputs must be strictly positive values.';
-        el.mRevenue.textContent = '-';
-        el.mMargin.textContent = '-';
-        el.mShifts.textContent = '-';
-        el.tProduction.innerHTML = '';
-        el.tPricing.innerHTML = '';
-        el.tFinancials.innerHTML = '';
-        el.tCapacity.innerHTML = '';
+        el.mRevenue.textContent = '-'; el.mMargin.textContent = '-'; el.mShifts.textContent = '-';
+        el.tProduction.innerHTML = ''; el.tPricing.innerHTML = '';
+        el.tFinancials.innerHTML = ''; el.tCapacity.innerHTML = '';
         el.footnote.textContent = '';
         return;
       }
 
-      const p1 = solvePlan(target, cost, price, 1);
-      const p2 = solvePlan(target, cost, price, 2);
-
-      let rec = null;
-      let label = '';
-      let feasible = false;
+      var p1 = solvePlan(target, cost, price, 1);
+      var p2 = solvePlan(target, cost, price, 2);
+      var rec, label, feasible;
 
       if (p1 && p1.revenue >= target) {
-        rec = p1;
-        label = 'Feasible with 1 shift';
-        feasible = true;
+        rec = p1; label = 'Feasible with 1 shift'; feasible = true;
       } else if (p2 && p2.revenue >= target) {
-        rec = p2;
-        label = 'Feasible only with 2 shifts';
-        feasible = true;
+        rec = p2; label = 'Feasible \u2014 2 shifts required'; feasible = true;
       } else {
-        const maxRev = p2 ? p2.revenue : (p1 ? p1.revenue : 0);
-        const shortfall = Math.max(0, target - maxRev);
+        var maxRev = p2 ? p2.revenue : (p1 ? p1.revenue : 0);
         rec = p2 || p1;
-        label = `Not feasible (short by ${fmtCurrency(shortfall)})`;
+        label = 'Not feasible (short by ' + fmtCurrency(Math.max(0, target - maxRev)) + ')';
         feasible = false;
       }
 
-      el.status.className = `status ${feasible ? 'ok' : 'bad'}`;
+      el.status.className = 'status ' + (feasible ? 'ok' : 'bad');
       el.status.textContent = label;
-
       el.mRevenue.textContent = fmtCurrency(rec.revenue);
-      el.mMargin.textContent = `${fmtCurrency(rec.margin)} (${fmtNum(rec.marginPct, 1)}%)`;
-      el.mShifts.textContent = `${rec.shifts}`;
+      el.mMargin.textContent = fmtCurrency(rec.margin) + ' (' + fmtNum(rec.marginPct, 1) + '%)';
+      el.mShifts.textContent = String(rec.shifts);
 
       el.tProduction.innerHTML = [
-        row('Committed Sheet', `${fmtNum(COMMITTED_SHEET_M2)} m^2`),
-        row('Additional Sheet Sold', `${fmtNum(rec.extraSheet)} m^2`),
-        row('Total Sheet Sold', `${fmtNum(rec.totalSheet)} m^2`, true),
-        row('Elements Produced', `${fmtNum(rec.elements)} units`),
-        row('Sheet Consumed for Elements', `${fmtNum(rec.elements * SQM_PER_ELEMENT)} m^2`),
-        row('Total m^2 Produced', `${fmtNum(rec.totalM2)} m^2`, true)
+        row('Committed Sheet', fmtNum(COMMITTED_SHEET_M2) + ' m\u00b2'),
+        row('Additional Sheet Sold', fmtNum(rec.extraSheet) + ' m\u00b2'),
+        row('Total Sheet Sold', fmtNum(rec.totalSheet) + ' m\u00b2', true),
+        row('Elements Produced', fmtNum(rec.elements) + ' units'),
+        row('Sheet Consumed for Elements', fmtNum(rec.elements * SQM_PER_ELEMENT) + ' m\u00b2'),
+        row('Total m\u00b2 Produced', fmtNum(rec.totalM2) + ' m\u00b2', true)
       ].join('');
 
       el.tPricing.innerHTML = [
-        row('Sheet Price', `${fmtCurrency(price, 2)} /m^2`),
-        row('Element Price', `${fmtCurrency(rec.elemPrice, 2)} /unit`, true),
-        row('Formula', `1.83 x ${fmtCurrency(price, 2)} x 54`)
+        row('Sheet Price', fmtCurrency(price, 2) + ' /m\u00b2'),
+        row('Element Price', fmtCurrency(rec.elemPrice, 2) + ' /unit', true),
+        row('Formula', '1.83 \u00d7 ' + fmtCurrency(price, 2) + ' \u00d7 54')
       ].join('');
 
       el.tFinancials.innerHTML = [
@@ -434,34 +313,33 @@
         row('Total Revenue', fmtCurrency(rec.revenue), true),
         row('Revenue Target', fmtCurrency(target)),
         row('Production Cost', fmtCurrency(rec.cost)),
-        row('Gross Margin', `${fmtCurrency(rec.margin)} (${fmtNum(rec.marginPct, 1)}%)`, true)
+        row('Gross Margin', fmtCurrency(rec.margin) + ' (' + fmtNum(rec.marginPct, 1) + '%)', true)
       ].join('');
 
-      const shift2Rows = rec.shifts === 2
-        ? [
-            row('Shift 2 Capacity', `${fmtNum(CAPACITY_ONE_SHIFT)} m^2`),
-            row('Shift 2 Used', `${fmtNum(rec.s2Used)} m^2 (${fmtNum(rec.s2Pct, 1)}%)`, true)
-          ]
-        : [];
+      var capRows = [
+        row('Shifts Required', String(rec.shifts), true),
+        row('Total Annual Capacity', fmtNum(rec.capacity) + ' m\u00b2'),
+        row('Overall Utilization', fmtNum(rec.utilization, 1) + '%', true),
+        row('Shift 1 Capacity', fmtNum(CAPACITY_ONE_SHIFT) + ' m\u00b2'),
+        row('Shift 1 Used', fmtNum(rec.s1Used) + ' m\u00b2 (' + fmtNum(rec.s1Pct, 1) + '%)', true)
+      ];
+      if (rec.shifts === 2) {
+        capRows.push(row('Shift 2 Capacity', fmtNum(CAPACITY_ONE_SHIFT) + ' m\u00b2'));
+        capRows.push(row('Shift 2 Used', fmtNum(rec.s2Used) + ' m\u00b2 (' + fmtNum(rec.s2Pct, 1) + '%)', true));
+      }
+      el.tCapacity.innerHTML = capRows.join('');
 
-      el.tCapacity.innerHTML = [
-        row('Shifts Required', `${rec.shifts}`, true),
-        row('Total Annual Capacity', `${fmtNum(rec.capacity)} m^2`),
-        row('Overall Utilization', `${fmtNum(rec.utilization, 1)}%`, true),
-        row('Shift 1 Capacity', `${fmtNum(CAPACITY_ONE_SHIFT)} m^2`),
-        row('Shift 1 Used', `${fmtNum(rec.s1Used)} m^2 (${fmtNum(rec.s1Pct, 1)}%)`, true),
-        ...shift2Rows
-      ].join('');
-
-      const scenario = feasible
+      el.footnote.textContent = (feasible
         ? 'Plan is feasible for the current target.'
-        : 'Plan cannot reach target even at 2 shifts with current pricing assumptions.';
-      el.footnote.textContent = `${scenario} Solver uses the highest-margin mix first, then sheet only as needed to close any remaining revenue gap.`;
+        : 'Plan cannot reach target even at 2 shifts with current pricing.')
+        + ' Solver maximizes margin by prioritizing elements, then fills remaining gap with sheet.';
     }
 
     el.target.addEventListener('input', analyze);
     el.cost.addEventListener('input', analyze);
     el.price.addEventListener('input', analyze);
+    el.elemPriceInput.addEventListener('input', analyze);
+    updateDerived();
     analyze();
   </script>
 </body>
