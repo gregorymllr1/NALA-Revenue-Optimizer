@@ -84,13 +84,16 @@
       </div>
       <div class="constants">
         312 operating days/yr &middot; 1,250 m&sup2;/day/shift<br>
-        54 m&sup2; per element &middot; 172,000 m&sup2; committed sheet<br>
-        Element price = 1.83 &times; sheet price &times; 54
+        54 m&sup2; per element &middot; Element price = 1.83 &times; sheet price &times; 54
       </div>
     </section>
 
     <section class="layout">
       <article class="card">
+        <div class="field">
+          <label for="committed">Committed Sheet (m&sup2;)</label>
+          <input id="committed" type="number" step="1000" value="172000" />
+        </div>
         <div class="field">
           <label for="target">Target Revenue ($)</label>
           <input id="target" type="number" step="100000" value="10000000" />
@@ -140,13 +143,13 @@
     const SQM_PER_DAY_SHIFT = 10000 / 8;
     const OPERATING_DAYS = 312;
     const SQM_PER_ELEMENT = 54;
-    const COMMITTED_SHEET_M2 = 172000;
     const ELEMENT_VALUE_MULT = 1.83;
     const CAPACITY_ONE_SHIFT = SQM_PER_DAY_SHIFT * OPERATING_DAYS;
 
     let priceMode = 'sheet';
 
     const el = {
+      committed: document.getElementById('committed'),
       target: document.getElementById('target'),
       cost: document.getElementById('cost'),
       price: document.getElementById('price'),
@@ -209,12 +212,12 @@
     el.modeSheet.addEventListener('click', function() { setMode('sheet'); });
     el.modeElem.addEventListener('click', function() { setMode('element'); });
 
-    function solvePlan(target, cost, price, shifts) {
+    function solvePlan(target, cost, price, shifts, committedSheet) {
       var cap = CAPACITY_ONE_SHIFT * shifts;
       var elemUnitPrice = ELEMENT_VALUE_MULT * price * SQM_PER_ELEMENT;
-      if (cap < COMMITTED_SHEET_M2) return null;
-      var availM2 = cap - COMMITTED_SHEET_M2;
-      var committedRev = COMMITTED_SHEET_M2 * price;
+      if (cap < committedSheet) return null;
+      var availM2 = cap - committedSheet;
+      var committedRev = committedSheet * price;
       var remainingRev = target - committedRev;
       var nElem = 0, extraSheet = 0;
       if (remainingRev > 0) {
@@ -229,7 +232,7 @@
           extraSheet = Math.min(sheetM2Needed, Math.floor(availAfterElem));
         }
       }
-      var totalSheet = COMMITTED_SHEET_M2 + extraSheet;
+      var totalSheet = committedSheet + extraSheet;
       var totalM2 = totalSheet + nElem * SQM_PER_ELEMENT;
       var sheetRev = totalSheet * price;
       var elemRev = nElem * elemUnitPrice;
@@ -256,14 +259,15 @@
     }
 
     function analyze() {
+      var committedSheet = Number(el.committed.value);
       var target = Number(el.target.value);
       var cost = Number(el.cost.value);
       var price = getSheetPrice();
       updateDerived();
 
-      if (!(target > 0 && cost > 0 && price > 0)) {
+      if (!(target > 0 && cost > 0 && price > 0 && committedSheet >= 0)) {
         el.status.className = 'status bad';
-        el.status.textContent = 'All inputs must be strictly positive values.';
+        el.status.textContent = 'All inputs must be valid (revenue, cost, price > 0; committed sheet ≥ 0).';
         el.mRevenue.textContent = '-'; el.mMargin.textContent = '-'; el.mShifts.textContent = '-';
         el.tProduction.innerHTML = ''; el.tPricing.innerHTML = '';
         el.tFinancials.innerHTML = ''; el.tCapacity.innerHTML = '';
@@ -271,8 +275,8 @@
         return;
       }
 
-      var p1 = solvePlan(target, cost, price, 1);
-      var p2 = solvePlan(target, cost, price, 2);
+      var p1 = solvePlan(target, cost, price, 1, committedSheet);
+      var p2 = solvePlan(target, cost, price, 2, committedSheet);
       var rec, label, feasible;
 
       if (p1 && p1.revenue >= target) {
@@ -293,7 +297,7 @@
       el.mShifts.textContent = String(rec.shifts);
 
       el.tProduction.innerHTML = [
-        row('Committed Sheet', fmtNum(COMMITTED_SHEET_M2) + ' m\u00b2'),
+        row('Committed Sheet', fmtNum(committedSheet) + ' m\u00b2'),
         row('Additional Sheet Sold', fmtNum(rec.extraSheet) + ' m\u00b2'),
         row('Total Sheet Sold', fmtNum(rec.totalSheet) + ' m\u00b2', true),
         row('Elements Produced', fmtNum(rec.elements) + ' units'),
@@ -335,6 +339,7 @@
         + ' Solver maximizes margin by prioritizing elements, then fills remaining gap with sheet.';
     }
 
+    el.committed.addEventListener('input', analyze);
     el.target.addEventListener('input', analyze);
     el.cost.addEventListener('input', analyze);
     el.price.addEventListener('input', analyze);
