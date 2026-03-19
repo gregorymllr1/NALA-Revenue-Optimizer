@@ -84,7 +84,7 @@
       </div>
       <div class="constants">
         312 operating days/yr &middot; 1,250 m&sup2;/day/shift<br>
-        54 m&sup2; per element &middot; Element price = 1.83 &times; sheet price &times; 54
+        54 m&sup2; per element &middot; Default element price = 1.83 &times; sheet price &times; 54
       </div>
     </section>
 
@@ -99,17 +99,23 @@
           <input id="target" type="number" step="100000" value="10000000" />
         </div>
         <div class="field">
-          <label for="cost">Production Cost ($/m&sup2;)</label>
+          <label for="cost">Sheet Production Cost ($/m&sup2;)</label>
           <input id="cost" type="number" step="0.1" value="9.5" />
         </div>
 
         <div style="margin-bottom:12px">
-          <label style="font-size:0.9rem;color:#334155;font-weight:600;display:block;margin-bottom:6px;">I know the price of:</label>
-          <div class="toggle-group">
-            <button id="modeSheet" class="active" type="button">Sheet ($/m&sup2;)</button>
-            <button id="modeElem" type="button">Element ($/unit)</button>
+          <label style="display:flex;align-items:center;gap:8px;font-size:0.9rem;color:#334155;font-weight:600;margin-bottom:8px;cursor:pointer;">
+            <input id="setBoth" type="checkbox" style="width:16px;height:16px;cursor:pointer;" />
+            I want to set both sheet and element prices
+          </label>
+          <div id="ratioModeGroup">
+            <label style="font-size:0.9rem;color:#334155;font-weight:600;display:block;margin-bottom:6px;">I know the price of:</label>
+            <div class="toggle-group">
+              <button id="modeSheet" class="active" type="button">Sheet ($/m&sup2;)</button>
+              <button id="modeElem" type="button">Element ($/unit)</button>
+            </div>
+            <p style="margin:0 0 8px;font-size:0.8rem;color:var(--muted);">Enter one &mdash; the other is calculated automatically (1.83&times; ratio).</p>
           </div>
-          <p style="margin:0 0 8px;font-size:0.8rem;color:var(--muted);">Enter one &mdash; the other is calculated automatically.</p>
         </div>
         <div class="field" id="fieldSheet">
           <label for="price">Sheet Market Price ($/m&sup2;)</label>
@@ -147,6 +153,7 @@
     const CAPACITY_ONE_SHIFT = SQM_PER_DAY_SHIFT * OPERATING_DAYS;
 
     let priceMode = 'sheet';
+    let setBothMode = false;
 
     const el = {
       committed: document.getElementById('committed'),
@@ -154,6 +161,8 @@
       cost: document.getElementById('cost'),
       price: document.getElementById('price'),
       elemPriceInput: document.getElementById('elemPriceInput'),
+      setBoth: document.getElementById('setBoth'),
+      ratioModeGroup: document.getElementById('ratioModeGroup'),
       modeSheet: document.getElementById('modeSheet'),
       modeElem: document.getElementById('modeElem'),
       fieldSheet: document.getElementById('fieldSheet'),
@@ -178,18 +187,30 @@
     }).format(v);
 
     function getSheetPrice() {
+      if (setBothMode) return Number(el.price.value);
       if (priceMode === 'sheet') return Number(el.price.value);
       return Number(el.elemPriceInput.value) / (ELEMENT_VALUE_MULT * SQM_PER_ELEMENT);
     }
 
+    function getElemUnitPrice() {
+      if (setBothMode) return Number(el.elemPriceInput.value);
+      var sp = getSheetPrice();
+      return ELEMENT_VALUE_MULT * sp * SQM_PER_ELEMENT;
+    }
+
     function updateDerived() {
-      if (priceMode === 'sheet') {
-        const sp = Number(el.price.value);
-        const ep = ELEMENT_VALUE_MULT * sp * SQM_PER_ELEMENT;
+      if (setBothMode) {
+        var sp = Number(el.price.value);
+        var ep = Number(el.elemPriceInput.value);
+        var ratio = (sp > 0 && SQM_PER_ELEMENT > 0) ? (ep / (sp * SQM_PER_ELEMENT)).toFixed(2) : '—';
+        el.derivedPrice.innerHTML = 'Implied element/sheet ratio: <strong>' + ratio + '&times;</strong> (default is 1.83&times;)';
+      } else if (priceMode === 'sheet') {
+        var sp = Number(el.price.value);
+        var ep = ELEMENT_VALUE_MULT * sp * SQM_PER_ELEMENT;
         el.derivedPrice.innerHTML = 'Derived element price: <strong>' + fmtCurrency(ep, 2) + '/unit</strong> (1.83 &times; $' + fmtNum(sp, 2) + ' &times; 54)';
       } else {
-        const ep = Number(el.elemPriceInput.value);
-        const sp = ep / (ELEMENT_VALUE_MULT * SQM_PER_ELEMENT);
+        var ep = Number(el.elemPriceInput.value);
+        var sp = ep / (ELEMENT_VALUE_MULT * SQM_PER_ELEMENT);
         el.derivedPrice.innerHTML = 'Derived sheet price: <strong>' + fmtCurrency(sp, 2) + '/m&sup2;</strong> (' + fmtCurrency(ep, 2) + ' &divide; 1.83 &divide; 54)';
       }
     }
@@ -212,9 +233,27 @@
     el.modeSheet.addEventListener('click', function() { setMode('sheet'); });
     el.modeElem.addEventListener('click', function() { setMode('element'); });
 
-    function solvePlan(target, cost, price, shifts, committedSheet) {
+    el.setBoth.addEventListener('change', function() {
+      setBothMode = el.setBoth.checked;
+      if (setBothMode) {
+        el.ratioModeGroup.style.display = 'none';
+        el.fieldSheet.style.display = '';
+        el.fieldElem.style.display = '';
+        if (priceMode === 'sheet') {
+          el.elemPriceInput.value = (ELEMENT_VALUE_MULT * Number(el.price.value) * SQM_PER_ELEMENT).toFixed(2);
+        } else {
+          el.price.value = (Number(el.elemPriceInput.value) / (ELEMENT_VALUE_MULT * SQM_PER_ELEMENT)).toFixed(2);
+        }
+      } else {
+        el.ratioModeGroup.style.display = '';
+        setMode(priceMode);
+      }
+      updateDerived();
+      analyze();
+    });
+
+    function solvePlan(target, cost, price, elemUnitPrice, shifts, committedSheet) {
       var cap = CAPACITY_ONE_SHIFT * shifts;
-      var elemUnitPrice = ELEMENT_VALUE_MULT * price * SQM_PER_ELEMENT;
       if (cap < committedSheet) return null;
       var availM2 = cap - committedSheet;
       var committedRev = committedSheet * price;
@@ -263,9 +302,10 @@
       var target = Number(el.target.value);
       var cost = Number(el.cost.value);
       var price = getSheetPrice();
+      var elemUnitPrice = getElemUnitPrice();
       updateDerived();
 
-      if (!(target > 0 && cost > 0 && price > 0 && committedSheet >= 0)) {
+      if (!(target > 0 && cost > 0 && price > 0 && elemUnitPrice > 0 && committedSheet >= 0)) {
         el.status.className = 'status bad';
         el.status.textContent = 'All inputs must be valid (revenue, cost, price > 0; committed sheet ≥ 0).';
         el.mRevenue.textContent = '-'; el.mMargin.textContent = '-'; el.mShifts.textContent = '-';
@@ -275,8 +315,8 @@
         return;
       }
 
-      var p1 = solvePlan(target, cost, price, 1, committedSheet);
-      var p2 = solvePlan(target, cost, price, 2, committedSheet);
+      var p1 = solvePlan(target, cost, price, elemUnitPrice, 1, committedSheet);
+      var p2 = solvePlan(target, cost, price, elemUnitPrice, 2, committedSheet);
       var rec, label, feasible;
 
       if (p1 && p1.revenue >= target) {
@@ -305,11 +345,17 @@
         row('Total m\u00b2 Produced', fmtNum(rec.totalM2) + ' m\u00b2', true)
       ].join('');
 
-      el.tPricing.innerHTML = [
+      var pricingRows = [
         row('Sheet Price', fmtCurrency(price, 2) + ' /m\u00b2'),
-        row('Element Price', fmtCurrency(rec.elemPrice, 2) + ' /unit', true),
-        row('Formula', '1.83 \u00d7 ' + fmtCurrency(price, 2) + ' \u00d7 54')
-      ].join('');
+        row('Element Price', fmtCurrency(rec.elemPrice, 2) + ' /unit', true)
+      ];
+      if (setBothMode) {
+        var impliedRatio = (price > 0) ? (rec.elemPrice / (price * SQM_PER_ELEMENT)).toFixed(2) : '\u2014';
+        pricingRows.push(row('Implied Ratio', impliedRatio + '\u00d7 (default 1.83\u00d7)'));
+      } else {
+        pricingRows.push(row('Formula', '1.83 \u00d7 ' + fmtCurrency(price, 2) + ' \u00d7 54'));
+      }
+      el.tPricing.innerHTML = pricingRows.join('');
 
       el.tFinancials.innerHTML = [
         row('Sheet Revenue', fmtCurrency(rec.sheetRev)),
